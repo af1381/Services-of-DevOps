@@ -1,3 +1,8 @@
+<mark>The Push Gateway service is used to store data that is executed for a short period of time, so that it is completed within a few seconds. One of its uses is to monitor bash scripts, where we can store bash script data and perform monitoring operations using Prometheus and Grafana.</mark>
+
+
+
+
 # Download and configure Push Gateway
      sudo wget https://github.com/prometheus/pushgateway/releases/download/v1.5.1/pushgateway-1.10.0.freebsd-amd64.tar.gz
 # After downloading, unzip the file
