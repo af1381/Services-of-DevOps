@@ -1,4 +1,6 @@
-# Download loki and then install
+# 📜💾 Install & Configure Loki and Promtail (All-in-One)
+
+# 📥 Download Loki and then install:
       wget https://github.com/grafana/loki/releases/download/v3.3.2/loki-linux-amd64.zip
       
       unzip loki-linux-amd64.zip
@@ -6,13 +8,13 @@
       chmod +x loki-linux-amd64
       
       sudo mv loki-linux-amd64 /usr/local/bin/loki
-      
-# Create the configuration file in /etc/loki path:
+
+# 🗂️ Create the configuration file in /etc/loki:
       sudo mkdir /etc/loki
 
       sudo vim /etc/loki/loki-config.yml
 
-# Add to File:
+# ✍️ Add to File:
       auth_enabled: false
 
       server:
@@ -59,10 +61,10 @@
         retention_deletes_enabled: false
         retention_period: 0s
 
-# Creating a service for Loki: Create a Systemd service for Loki:
+# ⚙️ Create a Systemd service for Loki:
        sudo vim /etc/systemd/system/loki.service
 
-# Add to File:
+# ✍️ Add to File:
        [Unit]
        Description=Loki Log Aggregation System
        After=network.target
@@ -74,12 +76,17 @@
        [Install]
        WantedBy=multi-user.target
 
-# Activating and launching Loki :
+# ▶️ Activating and launching Loki:
        sudo systemctl daemon-reload
        sudo systemctl enable loki
        sudo systemctl start loki
 
-# Promtail installation and configuration:
+# 🧠 Check service status:
+       sudo systemctl status loki
+
+---
+
+# 🪶 Promtail installation and configuration:
 
        wget https://github.com/grafana/loki/releases/download/v3.3.2/promtail-linux-amd64.zip
 
@@ -88,12 +95,14 @@
        chmod +x promtail-linux-amd64
 
        sudo mv promtail-linux-amd64 /usr/local/bin/promtail
-       
-# create the Promtail configuration file :
 
+# 🗂️ Create Promtail config directory (if not exists):
+       sudo mkdir -p /etc/promtail
+
+# 📝 Create Promtail configuration file:
        sudo vim /etc/promtail/promtail-config.yml
 
-# Add to File:
+# ✍️ Add to File:
        server:
          http_listen_port: 9080
          grpc_listen_port: 0
@@ -113,11 +122,10 @@
                  job: varlogs
                  __path__: /var/log/*log
 
-
-# Create service for Promtail: Create Systemd service for Promtail :
+# ⚙️ Create Systemd service for Promtail:
        sudo vim /etc/systemd/system/promtail.service
 
-# Add to File:
+# ✍️ Add to File:
        [Unit]
        Description=Promtail Log Collector
        After=network.target
@@ -129,9 +137,13 @@
        [Install]
        WantedBy=multi-user.target
 
-
-# Activation and startup of Promtail:
+# ▶️ Activation and startup of Promtail:
        sudo systemctl daemon-reload
        sudo systemctl enable promtail
        sudo systemctl start promtail
-  
+
+# 🔍 Check service status:
+       sudo systemctl status promtail
+
+✅ Done! Loki 🧱 and Promtail 🪶 are installed and running successfully.  
+You can now visualize logs in **Grafana → Explore → Data source: Loki** 🎨✨
