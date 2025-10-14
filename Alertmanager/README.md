@@ -1,97 +1,101 @@
-## ⬇️ Download Alertmanager
-wget https://github.com/prometheus/alertmanager/releases/download/v0.28.0/alertmanager-0.28.0.linux-amd64.tar.gz
+# 🚨📦 Install & Configuration Alertmanager
 
-## 📦 Extract
-tar -xvf alertmanager-0.28.0.linux-amd64.tar.gz
+* First, you need to download and install the Alertmanager binary file  
 
-## 🚚 Move binaries to /usr/local/bin
-sudo mv alertmanager-0.28.0.linux-amd64/alertmanager /usr/local/bin/
-sudo mv alertmanager-0.28.0.linux-amd64/amtool /usr/local/bin/
+        wget https://github.com/prometheus/alertmanager/releases/download/v0.28.0/alertmanager-0.28.0.linux-amd64.tar.gz
 
-## 🗂️ Create config folders
-sudo mkdir /etc/alertmanager
-sudo mkdir /etc/alertmanager/templates
+# 📦 After downloading, extract the file:  
+        tar -xvf alertmanager-0.28.0.linux-amd64.tar.gz
 
-## 📝 Create /etc/alertmanager/alertmanager.yml
-sudo vim /etc/alertmanager/alertmanager.yml
-# Paste:
-# ---
-global:
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'your-email@gmail.com'
-  smtp_auth_username: 'your-email@gmail.com'
-  smtp_auth_password: 'your-email-password'
-  smtp_require_tls: true
+# 🚚 For faster and easier access to Alertmanager, move the binaries to /usr/local/bin:  
+        sudo mv alertmanager-0.28.0.linux-amd64/alertmanager /usr/local/bin/  
+        sudo mv alertmanager-0.28.0.linux-amd64/amtool /usr/local/bin/
 
-route:
-  receiver: 'email-alerts'
+* Alertmanager uses a configuration file called **alertmanager.yml**.  
+  Place this file in a dedicated folder:
 
-receivers:
-  - name: 'email-alerts'
-    email_configs:
-      - to: 'destination-email@gmail.com'
-# ---
+        sudo mkdir /etc/alertmanager  
+        sudo mkdir /etc/alertmanager/templates
 
-## 🔐 Fix ownership (adjust if you run as another user)
-sudo chown -R $USER:$USER /etc/alertmanager
+# 📝 Create Alertmanager config file:  
+        sudo vim /etc/alertmanager/alertmanager.yml
 
-## ⚙️ Create systemd service /etc/systemd/system/alertmanager.service
-sudo vim /etc/systemd/system/alertmanager.service
-# Paste:
-# ---
-[Unit]
-Description=Alertmanager
-After=network.target
+* After creating the file, paste the following configuration:
 
-[Service]
-User=alertmanager
-Group=alertmanager
-ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager/
+        global:
+          smtp_smarthost: 'smtp.gmail.com:587'
+          smtp_from: 'your-email@gmail.com'
+          smtp_auth_username: 'your-email@gmail.com'
+          smtp_auth_password: 'your-email-password'
+          smtp_require_tls: true
 
-[Install]
-WantedBy=multi-user.target
-# ---
+        route:
+          receiver: 'email-alerts'
 
-## ▶️ Enable & start service
-sudo systemctl daemon-reload
-sudo systemctl enable alertmanager
-sudo systemctl start alertmanager
+        receivers:
+          - name: 'email-alerts'
+            email_configs:
+              - to: 'destination-email@gmail.com'
 
-## 🔍 Check status
-sudo systemctl status alertmanager
+# 🔐 Access settings:  
+        sudo chown -R $USER:$USER /etc/alertmanager
 
-## 🤝 Configure Prometheus to talk to Alertmanager (prometheus.yml)
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-          - 'localhost:9093'  # Alertmanager address
-          
-## 🚨 Create Prometheus alert rules (alert_rules.yml)
-groups:
-  - name: example-alert
-    rules:
-      - alert: InstanceDown
-        expr: up == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Instance {{ $labels.instance }} is down"
+# ⚙️ Create systemd service for Alertmanager:  
+        sudo vim /etc/systemd/system/alertmanager.service
 
-## 📎 Tell Prometheus to load the rules (prometheus.yml)
-rule_files:
-  - "alert_rules.yml"
+* After creating the above file, put the following contents inside it:
 
-## 🔁 Reload / restart after changes
-# Reload Prometheus (preferred if supported by your setup)
-sudo systemctl reload prometheus || sudo systemctl restart prometheus
-sudo systemctl status prometheus
+        [Unit]
+        Description=Alertmanager
+        After=network.target
 
-# If you changed Alertmanager config:
-sudo systemctl reload alertmanager || sudo systemctl restart alertmanager
-sudo systemctl status alertmanager
+        [Service]
+        User=alertmanager
+        Group=alertmanager
+        ExecStart=/usr/local/bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager/
 
-✅ Done! Open UI: http://localhost:9093
+        [Install]
+        WantedBy=multi-user.target
 
+# ▶️ Service activation:
+        sudo systemctl daemon-reload
+        sudo systemctl enable alertmanager
+        sudo systemctl start alertmanager
 
+# 🔎 Check service status:
+        sudo systemctl status alertmanager
+
+# 🤝 Configure Prometheus to communicate with Alertmanager:
+* In the Prometheus configuration file (usually **prometheus.yml**), add a section to configure Alertmanager:
+
+        alerting:
+          alertmanagers:
+            - static_configs:
+                - targets:
+                    - 'localhost:9093'   # Address Alertmanager
+
+# 🚨 Defining warning rules in Prometheus:
+* To define alert rules in Prometheus, create a file called **alert_rules.yml** and define the alert rules in it:
+
+        groups:
+          - name: example-alert
+            rules:
+              - alert: InstanceDown
+                expr: up == 0
+                for: 5m
+                labels:
+                  severity: critical
+                annotations:
+                  summary: "Instance {{ $labels.instance }} is down"
+
+# 📎 Then tell Prometheus to use this file in the **prometheus.yml** file:
+        rule_files:
+          - "alert_rules.yml"
+
+# 🔁 After making these settings, restart the Prometheus service:
+        sudo systemctl daemon-reload
+        sudo systemctl enable alertmanager
+        sudo systemctl start alertmanager
+        sudo systemctl status alertmanager
+
+✅ Done! Your Alertmanager is now configured and connected to Prometheus 🎉
