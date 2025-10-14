@@ -1,51 +1,91 @@
-# Download & Configuration Node Exporter
- <mark> Node Exporter provides detailed information about the server such as CPU, disk and memory usage.</mark>
- 
-*  First, we download the current stable version of Node Exporter
-  
-       curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+# Node Exporter Installation & Setup
 
-# open the downloaded archive:
-       tar xvf node_exporter-0.15.1.linux-amd64.tar.gz
-# Set user and group ownership to the node_exporter user you created:
-       sudo cp node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin
-       sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
-# Run Node Exporter:
-* We create the following file for permanent execution:
+This repository contains instructions to install and configure **Prometheus Node Exporter** (v1.8.0) manually on Linux.
 
-      sudo vim /etc/systemd/system/node_exporter.service
-# Add to File:
-      [Unit] 
-      Description=Node Exporter 
-      Wants=network-online.target 
-      After=network-online.target 
-      
-      [Service] 
-      User=node_exporter 
-      Group=node_exporter 
-      Type=simple ExecStart=/usr/local/bin/node_exporter 
-      
-      [Install] 
-      WantedBy=multi-user.target
+---
 
-# Then we restart systemd to use the service:
-      sudo systemctl daemon-reload
-      sudo systemctl start node_exporter
-      sudo systemctl status node_exporter
-# Configure Prometheus to receive Node Exporter data:
-      sudo nano /etc/prometheus/prometheus.yml
-# Add to file:
-        - job_name: 'node_exporter'
-          scrape_interval: 5s
-          static_configs:
-         - targets: ['localhost:9100']
+## 📦 Download & Extract
 
-* Since this exporter is also on the same server as Prometheus is running, we can use localhost instead of the IP address along with the default port of Node Exporter i.e. 9100.
+```bash
+# Download the Node Exporter tarball from GitHub (v1.8.0 release - example)
+wget https://github.com/prometheus/node_exporter/releases/download/v1.8.0/node_exporter-1.8.0.linux-amd64.tar.gz
 
+# Extract the tarball
+tar -xvzf node_exporter-1.8.0.linux-amd64.tar.gz
 
-# In the last step, restart the Prometheus service:
-      sudo systemctl restart Prometheus
-      sudo systemctl status Prometheus
+# Rename the extracted folder for simplicity
+mv node_exporter-1.8.0.linux-amd64 node_exporter
 
+# Move into the directory
+cd node_exporter
+```
 
- 
+---
+
+## 👤 Create Node Exporter User
+
+```bash
+# Create a dedicated system user for Node Exporter (no login shell, no home dir)
+useradd --no-create-home --shell /bin/false node_exporter
+```
+
+---
+
+## 📂 Copy Binary
+
+```bash
+# Move the binary to a standard location
+cp node_exporter /usr/local/bin/
+
+# Assign correct ownership to the exporter user
+chown node_exporter:node_exporter /usr/local/bin/node_exporter
+```
+
+---
+
+## ⚙️ Systemd Service File
+
+Create the service file:  
+`/etc/systemd/system/node_exporter.service`
+
+```ini
+[Unit]
+Description=Prometheus Node Exporter            # Service description
+Wants=network-online.target                     # Ensure networking is up
+After=network-online.target                     # Start only after network is ready
+
+[Service]
+User=node_exporter                              # Run as non-privileged user
+Group=node_exporter                             # Security best practice
+Type=simple                                     # Simple service type
+ExecStart=/usr/local/bin/node_exporter \
+  --web.listen-address=:9100                     # Port where exporter listens
+
+[Install]
+WantedBy=multi-user.target                      # Start service on boot (normal runlevel)
+```
+
+---
+
+## 🚀 Start & Enable the Service
+
+```bash
+# Reload systemd to recognize the new service
+systemctl daemon-reload
+
+# Enable the service (start at boot)
+systemctl enable node_exporter
+
+# Start the service
+systemctl start node_exporter
+
+# Check the service status
+systemctl status node_exporter
+```
+
+---
+
+## ✅ Verify
+
+- Node Exporter should now be running on:  
+  👉 `http://localhost:9100/metrics`
